@@ -139,6 +139,8 @@ h3 {
     position: absolute;
     left: 115px;
     top: 145px;
+    width: 164px;
+    height: 250px;
 }
 .w-100 {
     width: 100%;
@@ -184,6 +186,8 @@ h3 {
     margin-top: 20px;
 }
 .movie_photo_slider_item {
+    width: 104px;
+    height: 72px;
     margin-right: 10px;
     border-radius: 6px;
 }
@@ -205,6 +209,8 @@ h3 {
     font-size: 12px;
 }
 .blog_item_image {
+    width: 165px;
+    height: 250px;
     border-radius: 10px;
 }
 .detail_back_button {
@@ -213,4 +219,8 @@ h3 {
     left: 20px;
     top: 20px;
     font-size: 35px;
+}
+.main_moive_photo {
+    width: 164px;
+    height: 250px;
 }
