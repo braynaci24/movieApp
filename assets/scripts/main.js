@@ -1,8 +1,12 @@
+let searchInput = localStorage.getItem('searchInput') || '';
+let searchResult = JSON.parse(localStorage.getItem('searchResult')) || {};
 let pageUrl = window.location.search;
 let parameters = new URLSearchParams(pageUrl);
 let value = parameters.get('id');
-console.log(parameters, pageUrl, value);
+let searchParam = parameters.get('search');
 let loading = true;
+$('#search').val(searchInput);
+
 $(function () {
 
   const apiKey = 'd5b08408';
@@ -13,12 +17,19 @@ $(function () {
       var url = "http://www.omdbapi.com/?apikey=" + apiKey;
       var key = e.which;
       if (key == 13) {
-        $(this).val(" ")
+        let inputVal = $(this).val();
+        
         $.ajax({
           method: "GET",
           url: url + "&s=" + searchVal,
           success: function (data) {
-            createMovieList(data)
+            if( data.Search && data.Search.length > 0) {
+              createMovieList(data)
+              localStorage.setItem('searchInput', inputVal);
+              localStorage.setItem('searchResult', JSON.stringify(data));
+            }else {
+              $('#main').html(`<h3>No results</h3>`)
+            }
           }
         })
       }
@@ -26,11 +37,11 @@ $(function () {
   }
 
   function createMovieList(movieData) {
+    $('#main').html("")
     $('.dont_title').remove();
     for (let i = 0; i < movieData.Search.length; i++) {
-      if(movieData.Search[i].Poster == 'N/A'){
-        i++;
-      }
+      if(movieData.Search[i].Poster != 'N/A'){
+      
       let movieHtml = `
     <a href="/detail.html?id=${movieData.Search[i].imdbID}" class="movie_item_container">
       <img src="${movieData.Search[i].Poster}" class="lazy main_moive_photo" alt="">
@@ -39,6 +50,7 @@ $(function () {
     </a>
     `
       $('#main').append(movieHtml);
+    }
     }
   }
 
@@ -55,7 +67,6 @@ $(function () {
   }
 
   function getDetails(movieId) {
-    console.log(movieId)
     $.ajax({
       method: "GET",
       url: 'http://www.omdbapi.com/?i=' + movieId + '&apikey=' + apiKey,
@@ -66,8 +77,19 @@ $(function () {
     })
   }
 
+  if (searchParam === 'true'){
+    createMovieList(searchResult);
+    
+    localStorage.removeItem('searchResult');
+    localStorage.removeItem('searchInput');
+  }
+
   getDetails(value);
   searchMovie();
+
+  $('.detail_back_button').click(function(){
+    window.location.href = 'index.html?search=true';
+  })
 
   $('.lazy').Lazy();
   $('.search_icon').click(function () {
@@ -104,7 +126,8 @@ $(function () {
 $(window).on("load", function () {
   if(window.location.href.indexOf('/detail.html?id=tt') >= 0 && loading){
     $(".loader-wrapper").fadeOut();
-  }else {
+  }
+  else {
     setTimeout(() => {
       $(".loader-wrapper").fadeOut();
     }, 1300);
