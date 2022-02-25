@@ -71,7 +71,7 @@ $(function () {
       method: "GET",
       url: 'http://www.omdbapi.com/?i=' + movieId + '&apikey=' + apiKey,
       success: function (dataDetail) {
-        createMovieDetail(dataDetail)
+        createMovieDetail(dataDetail);
         loading = true;
       }
     })
