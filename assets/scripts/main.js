@@ -1,14 +1,15 @@
 let searchInput = localStorage.getItem('searchInput') || '';
 let searchResult = JSON.parse(localStorage.getItem('searchResult')) || {};
+let fav = JSON.parse(localStorage.getItem('fav')) || {
+  Search: []
+};
 let pageUrl = window.location.search;
 let parameters = new URLSearchParams(pageUrl);
 let value = parameters.get('id');
 let searchParam = parameters.get('search');
-let loading = true;
 $('#search').val(searchInput);
 
 $(function () {
-
   const apiKey = 'd5b08408';
 
   function searchMovie() {
@@ -18,16 +19,16 @@ $(function () {
       var key = e.which;
       if (key == 13) {
         let inputVal = $(this).val();
-        
+
         $.ajax({
           method: "GET",
           url: url + "&s=" + searchVal,
           success: function (data) {
-            if( data.Search && data.Search.length > 0) {
+            if (data.Search && data.Search.length > 0) {
               createMovieList(data)
               localStorage.setItem('searchInput', inputVal);
               localStorage.setItem('searchResult', JSON.stringify(data));
-            }else {
+            } else {
               $('#main').html(`<h3>No results</h3>`)
             }
           }
@@ -36,23 +37,28 @@ $(function () {
     });
   }
 
+
   function createMovieList(movieData) {
-    $('#main').html("")
-    $('.dont_title').remove();
-    for (let i = 0; i < movieData.Search.length; i++) {
-      if(movieData.Search[i].Poster != 'N/A'){
-      
-      let movieHtml = `
-    <a href="/detail.html?id=${movieData.Search[i].imdbID}" class="movie_item_container">
-      <img src="${movieData.Search[i].Poster}" class="lazy main_moive_photo" alt="">
-      <span class="movie_year">${movieData.Search[i].Year}</span>
-      <h3 class="movie_title">${movieData.Search[i].Title}</h3>
-    </a>
-    `
-      $('#main').append(movieHtml);
+    if (movieData.Search.length < 1) {
+      return
     }
+    $('#main').html("")
+    for (let i = 0; i < movieData.Search.length; i++) {
+      if (movieData.Search[i].Poster != 'N/A') {
+
+        let movieHtml = `
+        <a href="/detail.html?id=${movieData.Search[i].imdbID}" class="movie_item_container">
+        <img src="${movieData.Search[i].Poster}" class="lazy main_moive_photo" alt="">
+        <span class="movie_year">${movieData.Search[i].Year}</span>
+        <h3 class="movie_title">${movieData.Search[i].Title}</h3>
+        </a>
+        `
+        $('#main').append(movieHtml);
+      }
     }
   }
+
+  let favItem = undefined
 
   function createMovieDetail(data) {
     $('.detail_banner_top').attr("src", `${data.Poster}`)
@@ -64,6 +70,12 @@ $(function () {
     $('.movie_box_infos').text(data.Genre);
     $('.blog_item_image').attr("src", `${data.Poster}`)
     $('.blog_title').text(data.Title);
+
+    for (let i = 0; i < fav.Search.length; i++) {
+      if (fav.Search[i].imdbID == data.imdbID) {
+        $('.favorites').toggleClass('far').toggleClass('fas star');
+      }
+    }
   }
 
   function getDetails(movieId) {
@@ -71,25 +83,25 @@ $(function () {
       method: "GET",
       url: 'http://www.omdbapi.com/?i=' + movieId + '&apikey=' + apiKey,
       success: function (dataDetail) {
+        favItem = {
+          Title: dataDetail.Title,
+          Poster: dataDetail.Poster,
+          Type: dataDetail.Type,
+          Year: dataDetail.Year,
+          imdbID: dataDetail.imdbID
+        }
         createMovieDetail(dataDetail);
-        loading = true;
       }
     })
   }
 
-  if (searchParam === 'true'){
-    createMovieList(searchResult);
-    
-    localStorage.removeItem('searchResult');
-    localStorage.removeItem('searchInput');
+  function addToList(data) {
+    fav.Search.push(data);
+    localStorage.setItem('fav', JSON.stringify(fav));
   }
 
   getDetails(value);
   searchMovie();
-
-  $('.detail_back_button').click(function(){
-    window.location.href = 'index.html?search=true';
-  })
 
   $('.lazy').Lazy();
   $('.search_icon').click(function () {
@@ -114,22 +126,38 @@ $(function () {
     $(this).parent().find("span.show_more").css("display", "block");
   })
 
-  $('.detail_slider_photo').slick({
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    arrows: false,
-  });
+  createMovieList(fav);
 
+  if ($('.detail_slider_photo').length > 0) {
+    $('.detail_slider_photo').slick({
+      slidesToShow: 3,
+      slidesToScroll: 1,
+      arrows: false,
+    });
+  }
+
+  $('.favorites').click(function () {
+    if ($(this).hasClass('fas')) {
+      let filteredFavorites = fav.Search.filter(function (item) {
+        if (item.imdbID != value) {
+          return item
+        }
+      })
+
+      fav.Search = filteredFavorites;
+      localStorage.setItem('fav', JSON.stringify(fav));
+    } else {
+      addToList(favItem);
+    }
+    $(this).toggleClass('far').toggleClass('fas star');
+  });
 
 });
 
+
+
 $(window).on("load", function () {
-  if(window.location.href.indexOf('/detail.html?id=tt') >= 0 && loading){
+  setTimeout(() => {
     $(".loader-wrapper").fadeOut();
-  }
-  else {
-    setTimeout(() => {
-      $(".loader-wrapper").fadeOut();
-    }, 1300);
-  }
+  }, 1300);
 });
